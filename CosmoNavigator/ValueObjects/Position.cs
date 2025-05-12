@@ -1,6 +1,5 @@
+using CosmoNavigator.Enums;
+
 namespace CosmoNavigator.ValueObjects;
 
-public class Position
-{
-    
-}
+public readonly record struct Position(int X, int Y, DirectionType Direction);

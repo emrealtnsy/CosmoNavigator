@@ -1,6 +1,3 @@
 namespace CosmoNavigator.ValueObjects;
 
-public class Cordinate
-{
-    
-}
+public readonly record struct Coordinate(int X, int Y);

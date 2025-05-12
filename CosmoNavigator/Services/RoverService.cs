@@ -6,18 +6,27 @@ using CosmoNavigator.ValueObjects;
 
 namespace CosmoNavigator.Services;
 
-public class RoverService : IRover
+public class RoverService : IRoverService
 {
-    // IRover arayüzündeki event implementasyonu
-    public Coordinate Position { get; internal set; }
-    public DirectionType Heading { get; internal set; }
+    public Coordinate Coordinate { get; private set; }
+    public DirectionType Heading { get; private set; }
 
-    // Removed CreateRover method
-
-    // Case: Komut dizisi (örn. "LMLMLMLMM") sırasıyla işlenir; bir gezgin bitmeden diğeri başlamaz
-    public void ExecuteCommands(string commands, ISurface surface)
+    
+    
+    public void DeployRover(int x, int y, DirectionType dir, ISurfaceService surface)
     {
-        // Case: Komut seti sadece 'L','R','M' içerir; 'L'/'R' için dönüş, 'M' için ileri hareket uygulanır, aksi halde hata fırlatılır
+        Heading  = dir;
+        Coordinate = new Coordinate(x, y);
+        
+        var clamped = surface.Clamp(Coordinate);
+        if (!clamped.Equals(Coordinate))
+            throw new ArgumentException("Initial position outside grid");
+
+        surface.Occupy(Coordinate);
+    }
+
+    public void ExecuteCommands(string commands, ISurfaceService surface)
+    {
         foreach (var cmd in commands)
         {
             switch (cmd)
@@ -25,14 +34,16 @@ public class RoverService : IRover
                 case Commands.Left:  Heading = Heading.TurnLeft(); break;
                 case Commands.Right: Heading = Heading.TurnRight(); break;
                 case Commands.Move:
-                    var next = Heading.StepForward(Position);
-                    Position = surface.Clamp(next);
+                    var next = Heading.StepForward(Coordinate);
+                    Coordinate = surface.Clamp(next);
                     break;
                 default:
                     throw new ArgumentException($"Invalid command '{cmd}'");
             }
         }
-        // Son pozisyonu de işgal et
-        surface.Occupy(Position);
+
+        surface.Occupy(Coordinate);
     }
+
+    public Position Position => new(Coordinate.X, Coordinate.Y, Heading);
 }
